@@ -1,6 +1,6 @@
-import Fastify from "fastify";
+import Fastify, { type FastifyInstance } from "fastify";
 
-export function buildApp() {
+export function buildApp(): FastifyInstance {
   const app = Fastify({
     logger: false,
   });
