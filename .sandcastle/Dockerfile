@@ -1,4 +1,4 @@
-FROM node:22-bookworm
+FROM node:24-bookworm
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -19,6 +19,10 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
 # This keeps UID 1000 so that --userns=keep-id (Podman) and
 # --user 1000:1000 (Docker) map to the correct home directory owner.
 RUN usermod -d /home/agent -m -l agent node
+
+# Sandcastle runs the container as the host UID/GID. On macOS that UID often
+# differs from 1000, so make the home directory writable for arbitrary users.
+RUN chmod 0777 /home/agent
 
 # Install Codex CLI (run as root before USER agent)
 RUN npm install -g @openai/codex

@@ -43,6 +43,11 @@ const hooks = {
 // platform-specific binaries and any packages added since the last copy.
 const copyToWorktree = ["node_modules"];
 
+const sandboxProvider = () =>
+  docker({
+    mounts: [{ hostPath: "~/.codex", sandboxPath: "/home/agent/.codex" }],
+  });
+
 // ---------------------------------------------------------------------------
 // Main loop
 // ---------------------------------------------------------------------------
@@ -61,11 +66,7 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
   // -------------------------------------------------------------------------
   const plan = await sandcastle.run({
     hooks,
-    sandbox: docker({
-      mounts: [
-        { hostPath: "~/.codex", sandboxPath: "/home/agent/.codex", readonly: true}
-      ]
-    }),
+    sandbox: sandboxProvider(),
     name: "planner",
     // One iteration is enough: the planner just needs to read and reason,
     // not write code.
@@ -115,11 +116,7 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
     issues.map(async (issue) => {
       const sandbox = await sandcastle.createSandbox({
         branch: issue.branch,
-        sandbox: docker({
-          mounts: [
-            { hostPath: "~/.codex", sandboxPath: "/home/agent/.codex", readonly: true}
-          ]
-        }),
+        sandbox: sandboxProvider(),
         hooks,
         copyToWorktree,
       });
@@ -147,6 +144,8 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
             promptFile: "./.sandcastle/review-prompt.md",
             promptArgs: {
               BRANCH: issue.branch,
+              TASK_ID: issue.id,
+              ISSUE_TITLE: issue.title,
             },
           });
 
@@ -211,11 +210,7 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
   // -------------------------------------------------------------------------
   await sandcastle.run({
     hooks,
-    sandbox: docker({
-      mounts: [
-        { hostPath: "~/.codex", sandboxPath: "/home/agent/.codex", readonly: true}
-      ]
-    }),
+    sandbox: sandboxProvider(),
     name: "merger",
     maxIterations: 1,
     agent: sandcastle.codex("gpt-5.4-mini"),
@@ -223,6 +218,8 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
     promptArgs: {
       // A markdown list of branch names, one per line.
       BRANCHES: completedBranches.map((b) => `- ${b}`).join("\n"),
+      // The task
+      TASK_IDS: issues.map(i => i.id).join("\n"),
       // A markdown list of issue IDs and titles, one per line.
       ISSUES: completedIssues
         .map((i) => `- ${i.id}: ${i.title}`)
