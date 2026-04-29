@@ -1,8 +1,25 @@
 {
+  "name": "sandcastle-test",
+  "type": "module",
   "dependencies": {
-    "@ai-hero/sandcastle": "^0.5.5"
+    "@ai-hero/sandcastle": "^0.5.5",
+    "fastify": "^5.3.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.25.0",
+    "@types/node": "^22.15.3",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "eslint": "^9.25.0",
+    "globals": "^16.0.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
   },
   "scripts": {
-    "sandcastle": "node .sandcastle/main.ts"
+    "dev": "tsx watch src/server.ts",
+    "lint": "eslint .",
+    "sandcastle": "node .sandcastle/main.mts",
+    "test": "node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit"
   }
 }
