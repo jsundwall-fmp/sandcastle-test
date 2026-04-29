@@ -5,7 +5,7 @@ export function buildApp(): FastifyInstance {
     logger: false,
   });
 
-  app.get("/health", async () => {
+  app.get("/health", () => {
     return { status: "ok" };
   });
 
