@@ -7,9 +7,12 @@ import { buildApp } from "./app.js";
 import { createPollingTask } from "./polling-task.js";
 import { pollingMetrics } from "./polling-metrics.js";
 import { createProbeState } from "./probes.js";
+import {
+  loadRuntimeConfig,
+  type RuntimeConfigOptions,
+} from "./runtime-config.js";
 
 const DEFAULT_HOST = "0.0.0.0";
-const DEFAULT_PORT = 3000;
 const DEFAULT_POLLING_INTERVAL_MINUTES = 10;
 
 export interface PollingEnvironment {
@@ -30,13 +33,22 @@ export function readPollingIntervalMs(
   return pollingIntervalMinutes * 60_000;
 }
 
-export async function startServer(): Promise<{
+export interface StartServerOptions extends RuntimeConfigOptions {
+  pollingEnvironment?: PollingEnvironment;
+}
+
+export async function startServer(
+  options: StartServerOptions = {},
+): Promise<{
   address: string;
   app: FastifyInstance;
 }> {
+  const runtimeConfig = loadRuntimeConfig(options);
   const probeState = createProbeState();
   const pollingTask = createPollingTask({
-    intervalMs: readPollingIntervalMs(),
+    intervalMs: readPollingIntervalMs(
+      options.pollingEnvironment ?? options.processEnv ?? process.env,
+    ),
     metrics: pollingMetrics,
     onFatalError: () => {
       process.exit(1);
@@ -54,7 +66,7 @@ export async function startServer(): Promise<{
   try {
     const address = await app.listen({
       host: DEFAULT_HOST,
-      port: Number(process.env.PORT ?? DEFAULT_PORT),
+      port: runtimeConfig.port,
     });
 
     return { address, app };
