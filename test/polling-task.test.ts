@@ -83,6 +83,70 @@ test("polling task runs immediately, schedules the interval, and waits for in-fl
   assert.equal(probeState.hasCompletedInitialRun(), true);
 });
 
+test("polling task waits for the initial run before marking probes ready", async () => {
+  const probeState = createProbeState();
+  const deferred = createDeferred<void>();
+  let intervalCallback: (() => void) | undefined;
+  let runCount = 0;
+
+  const task = createPollingTask({
+    intervalMs: 1_000,
+    logger: {
+      error: () => {},
+      log: () => {},
+    },
+    metrics: {
+      observeRunDuration: () => {},
+      recordFailure: () => {},
+    },
+    onFatalError: () => {
+      throw new Error("unexpected fatal error");
+    },
+    probeState,
+    run: () => {
+      runCount += 1;
+
+      if (runCount === 1) {
+        return deferred.promise;
+      }
+    },
+    timers: {
+      clearInterval: () => {},
+      setInterval: (callback, timeout) => {
+        intervalCallback = callback;
+        void timeout;
+        return 1 as unknown as ReturnType<typeof setInterval>;
+      },
+    },
+  });
+
+  task.start();
+
+  assert.equal(runCount, 1);
+  assert.equal(probeState.hasCompletedInitialRun(), false);
+
+  intervalCallback?.();
+  await flushMicrotasks();
+
+  assert.equal(runCount, 2);
+  assert.equal(probeState.hasCompletedInitialRun(), false);
+
+  const stopPromise = task.stop();
+  let stopResolved = false;
+
+  stopPromise.then(() => {
+    stopResolved = true;
+  });
+
+  assert.equal(stopResolved, false);
+
+  deferred.resolve();
+  await stopPromise;
+
+  assert.equal(stopResolved, true);
+  assert.equal(probeState.hasCompletedInitialRun(), true);
+});
+
 test("polling task keeps readiness after startup succeeds and logs later failures without exiting", async () => {
   const probeState = createProbeState();
   let failureCount = 0;

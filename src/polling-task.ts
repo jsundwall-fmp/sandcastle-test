@@ -45,6 +45,7 @@ export function createPollingTask(options: PollingTaskOptions): PollingTask {
   let started = false;
   let stopping = false;
   let fatalTriggered = false;
+  let initialRunStarted = false;
   let activeRuns = 0;
   let stopPromise: Promise<void> | undefined;
   let resolveStopPromise: (() => void) | undefined;
@@ -73,13 +74,15 @@ export function createPollingTask(options: PollingTaskOptions): PollingTask {
       return;
     }
 
+    const isInitialRun = !initialRunStarted;
+    initialRunStarted = true;
     activeRuns += 1;
     const startedAt = Date.now();
 
     try {
       await run();
 
-      if (!fatalTriggered && !probeState.hasCompletedInitialRun()) {
+      if (isInitialRun && !fatalTriggered) {
         probeState.markInitialRunComplete();
       }
     } catch (error) {
