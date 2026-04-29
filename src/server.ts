@@ -43,12 +43,15 @@ export async function startServer(
   address: string;
   app: FastifyInstance;
 }> {
-  const runtimeConfig = loadRuntimeConfig(options);
+  const runtimeEnvironment = options.processEnv ?? process.env;
+  const runtimeConfig = loadRuntimeConfig({
+    envPath: options.envPath,
+    processEnv: runtimeEnvironment,
+  });
+  const pollingEnvironment = options.pollingEnvironment ?? runtimeEnvironment;
   const probeState = createProbeState();
   const pollingTask = createPollingTask({
-    intervalMs: readPollingIntervalMs(
-      options.pollingEnvironment ?? options.processEnv ?? process.env,
-    ),
+    intervalMs: readPollingIntervalMs(pollingEnvironment),
     metrics: pollingMetrics,
     onFatalError: () => {
       process.exit(1);

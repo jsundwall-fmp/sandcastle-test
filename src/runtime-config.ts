@@ -18,19 +18,19 @@ export interface RuntimeConfigOptions {
 export function loadRuntimeConfig(
   options: RuntimeConfigOptions = {},
 ): RuntimeConfig {
-  const envPath = options.envPath ?? DEFAULT_RUNTIME_ENV_PATH;
-  const processEnv = options.processEnv ?? process.env;
-  const result = loadDotenv({
+  const { envPath = DEFAULT_RUNTIME_ENV_PATH, processEnv = process.env } =
+    options;
+  const dotenvResult = loadDotenv({
     path: envPath,
     processEnv,
     override: true,
     quiet: true,
   });
 
-  if (result.error) {
+  if (dotenvResult.error) {
     throw new Error(
-      `Unable to load runtime environment from ${envPath}: ${result.error.message}`,
-      { cause: result.error },
+      `Unable to load runtime environment from ${envPath}: ${dotenvResult.error.message}`,
+      { cause: dotenvResult.error },
     );
   }
 

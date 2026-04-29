@@ -17,7 +17,7 @@ function createTempEnvFile(contents: string): string {
   return envPath;
 }
 
-test("loadRuntimeConfig loads PORT from the root .env file", () => {
+test("loadRuntimeConfig loads PORT from the configured env file", () => {
   const processEnv: Record<string, string | undefined> = {};
   const runtimeConfig = loadRuntimeConfig({
     envPath: createTempEnvFile("PORT=4321\n"),

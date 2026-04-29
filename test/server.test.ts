@@ -17,7 +17,7 @@ test("readPollingIntervalMs uses the configured polling interval in minutes", ()
   );
 });
 
-test("startServer fails before listening when the root .env file is missing", async () => {
+test("startServer fails before listening when the configured env file is missing", async () => {
   const missingEnvPath = path.join(
     mkdtempSync(path.join(os.tmpdir(), "sandcastle-server-missing-env-")),
     ".env",
